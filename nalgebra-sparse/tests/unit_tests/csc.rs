@@ -174,6 +174,22 @@ fn csc_matrix_valid_data() {
 }
 
 #[test]
+fn test_csc_to_dense() {
+  let sp_ident: CscMatrix::<f32> = CscMatrix::identity(10);
+  let dense_ident = sp_ident.fixed_dense_view::<5, 5, nalgebra::ArrayStorage<f32, 5, 5>>(0, 0);
+  assert_eq!(dense_ident, nalgebra::Matrix5::identity());
+
+  let dense_ident = sp_ident.fixed_dense_view::<5, 5, nalgebra::ArrayStorage<f32, 5, 5>>(1, 0);
+  assert_eq!(dense_ident, nalgebra::Matrix5::new(
+    0., 1., 0., 0., 0.,
+    0., 0., 1., 0., 0.,
+    0., 0., 0., 1., 0.,
+    0., 0., 0., 0., 1.,
+    0., 0., 0., 0., 0.,
+  ));
+}
+
+#[test]
 fn csc_matrix_valid_data_unsorted_column_indices() {
     let valid_data: ValidCsDataExamples = ValidCsDataExamples::new();
 

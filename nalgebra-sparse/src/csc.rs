@@ -16,6 +16,8 @@ use nalgebra::Scalar;
 use num_traits::One;
 use std::slice::{Iter, IterMut};
 
+use nalgebra::base::{Const, Matrix, OMatrix};
+
 /// A CSC representation of a sparse matrix.
 ///
 /// The Compressed Sparse Column (CSC) format is well-suited as a general-purpose storage format
@@ -571,6 +573,35 @@ impl<T> CscMatrix<T> {
         T: Scalar,
     {
         CsrMatrix::from(self).transpose_as_csc()
+    }
+
+    /// Create a dense view of this matrix, starting from an offset.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the row_offset + R > # numbers of rows or, col_offset + C > # number of rows
+    pub fn fixed_dense_view<const R: usize, const C: usize, S>(
+        &self,
+        row_offset: usize,
+        col_offset: usize,
+    ) -> OMatrix<T, Const<R>, Const<C>>
+    where
+        T: Scalar + num_traits::Zero,
+        nalgebra::DefaultAllocator: nalgebra::allocator::Allocator<T, Const<R>, Const<C>>,
+    {
+        assert!(row_offset + R < self.nrows());
+        assert!(col_offset + C < self.ncols());
+        let mut out = Matrix::<T, Const<R>, Const<C>, _>::zeros();
+        for x in 0..C {
+            let col = self.get_col(x + col_offset).unwrap();
+            for (&y, v) in col.row_indices().iter().zip(col.values().iter()) {
+                if y < row_offset || y >= row_offset + R {
+                    continue;
+                }
+                out[(y - row_offset, x)] = v.clone();
+            }
+        }
+        out
     }
 }
 
