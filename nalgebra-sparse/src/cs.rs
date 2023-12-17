@@ -114,6 +114,32 @@ impl<T> CsMatrix<T> {
         (self.sparsity_pattern, self.values)
     }
 
+    /// Slices along a given set of major and minor dimensions into `out`
+    /// Akin to Matlab's `X(row_idxs, col_idxs)` operator.
+    #[inline]
+    pub fn slice(&self, majors: &[usize], minors: &[usize]) -> Self
+    where
+        T: Copy,
+    {
+        let mut builder = CsBuilder::new(majors.len(), minors.len());
+
+        for (i, &maj) in majors.iter().enumerate() {
+            let lane = self.get_lane(maj).unwrap();
+            // cannot iterate in order because minors might be unordered
+            for (j, &min) in minors.iter().enumerate() {
+                match lane.get_entry(min) {
+                    // out of bounds
+                    None => todo!(),
+                    // zero, can just skip
+                    Some(SparseEntry::Zero) => continue,
+                    Some(SparseEntry::NonZero(&v)) => builder.insert(i, j, v).unwrap(),
+                }
+            }
+        }
+
+        builder.build()
+    }
+
     /// Returns an entry for the given major/minor indices, or `None` if the indices are out
     /// of bounds.
     #[must_use]

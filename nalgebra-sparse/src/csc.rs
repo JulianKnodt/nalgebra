@@ -430,6 +430,16 @@ impl<T> CscMatrix<T> {
         self.cs.disassemble()
     }
 
+    /// Slices part of the matrix into a new matrix, based on a specific set of indices.
+    pub fn slice(&self, rows: &[usize], cols: &[usize]) -> Self
+    where
+        T: Copy,
+    {
+        Self {
+            cs: self.cs.slice(cols, rows),
+        }
+    }
+
     /// Returns the sparsity pattern and values associated with this matrix.
     pub fn into_pattern_and_values(self) -> (SparsityPattern, Vec<T>) {
         self.cs.into_pattern_and_values()
